@@ -1,0 +1,18 @@
+{
+    "appId": "com.smartkid.game",
+    "appName": "SmartKid",
+    "webDir": "dist",
+    "server": {
+        "androidScheme": "https"
+    },
+    "android": {
+        "backgroundColor": "#87CEEB"
+    },
+    "plugins": {
+        "StatusBar": {
+            "overlaysWebView": false,
+            "style": "LIGHT",
+            "backgroundColor": "#FF87CEEB"
+        }
+    }
+}
