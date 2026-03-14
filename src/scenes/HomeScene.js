@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import GameState from '../utils/GameState.js';
+import { App } from '@capacitor/app';
 
 export default class HomeScene extends Phaser.Scene {
     constructor() { super('HomeScene'); }
@@ -11,21 +12,41 @@ export default class HomeScene extends Phaser.Scene {
         const isPortrait = height > width;
 
         // Setup Background Music
-        if (this.cache.audio.exists('bgm')) {
-            if (!this.sound.get('bgm')) {
-                const bgm = this.sound.add('bgm', { loop: true, volume: 1.0 });
-                if (GameState.isMusicEnabled()) {
-                    bgm.play();
+        const setupMusic = () => {
+            if (this.cache.audio.exists('bgm')) {
+                let bgm = this.sound.get('bgm');
+                if (!bgm) {
+                    bgm = this.sound.add('bgm', { loop: true, volume: 1.0 });
                 }
-            } else {
-                const bgm = this.sound.get('bgm');
+                
                 if (GameState.isMusicEnabled() && !bgm.isPlaying) {
                     bgm.play();
                 }
             }
-        }
+        };
 
-        this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height);
+        // Try playing immediately
+        setupMusic();
+
+        // One-time interaction listener to handle browser autoplay restrictions
+        const startAudioOnInteraction = () => {
+            if (this.sound.context.state === 'suspended') {
+                this.sound.context.resume();
+            }
+            setupMusic();
+            this.input.off('pointerdown', startAudioOnInteraction);
+        };
+        this.input.on('pointerdown', startAudioOnInteraction);
+
+        const bg = this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height);
+        this.tweens.add({
+            targets: bg,
+            scale: { from: bg.scaleX, to: bg.scaleX * 1.05 },
+            duration: 8000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
 
         // Title: proportional font + proportional Y
         const titleFontSize = Math.round(Math.min(width * 0.07, height * 0.12, 64));
@@ -82,6 +103,46 @@ export default class HomeScene extends Phaser.Scene {
                     if (!bgm.isPlaying) bgm.play();
                 } else {
                     if (bgm.isPlaying) bgm.pause();
+                }
+            }
+        });
+
+        // Exit Button
+        this.createExitButton(width, height, pad);
+    }
+
+    createExitButton(width, height, pad) {
+        const btnW = Math.round(Math.min(width * 0.18, 110));
+        const btnH = Math.round(Math.min(height * 0.08, 44));
+        const bx = btnW / 2 + pad;
+        const by = btnH / 2 + pad;
+
+        this.add.rectangle(bx + 3, by + 3, btnW, btnH, 0x000000, 0.35);
+        const btnBg = this.add.rectangle(bx, by, btnW, btnH, 0xe8350a, 1)
+            .setStrokeStyle(2, 0xff7755).setInteractive({ useHandCursor: true });
+        this.add.rectangle(bx, by - btnH * 0.18, btnW - 4, btnH * 0.35, 0xffffff, 0.15);
+
+        const iconFontSz = Math.round(Math.min(height * 0.035, 18));
+        this.add.text(bx - btnW * 0.28, by, '🚪', {
+            font: `bold ${iconFontSz}px Arial`, fill: '#fff'
+        }).setOrigin(0.5);
+        this.add.text(bx + btnW * 0.1, by, 'Exit', {
+            font: `bold ${iconFontSz}px Arial`, fill: '#fff', stroke: '#a02000', strokeThickness: 2
+        }).setOrigin(0.5);
+
+        btnBg.on('pointerover', () => { btnBg.setFillStyle(0xff4422, 1); btnBg.setStrokeStyle(3, 0xffdd00); });
+        btnBg.on('pointerout', () => { btnBg.setFillStyle(0xe8350a, 1); btnBg.setStrokeStyle(2, 0xff7755); });
+        
+        btnBg.on('pointerdown', () => {
+            if (window.confirm('Are you sure you want to exit?')) {
+                if (App && typeof App.exitApp === 'function') {
+                    App.exitApp();
+                } else if (navigator && navigator.app && typeof navigator.app.exitApp === 'function') {
+                    navigator.app.exitApp();
+                } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                    window.Capacitor.Plugins.App.exitApp();
+                } else {
+                    window.close();
                 }
             }
         });

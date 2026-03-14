@@ -7,7 +7,16 @@ export default class MoneyScene extends Phaser.Scene {
     create() {
         this.hasEverInteracted = false; // Track if user has ever dragged a coin
         const { width, height } = this.cameras.main;
-        this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height).setDepth(0);
+        const bg = this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height).setDepth(0);
+        this.tweens.add({
+            targets: bg,
+            scale: { from: bg.scaleX, to: bg.scaleX * 1.05 },
+            duration: 8000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
 
 
 
@@ -284,8 +293,8 @@ export default class MoneyScene extends Phaser.Scene {
             ];
 
             this.handHint = this.add.text(coinPositions[0], startY, '👆🏻', {
-                font: `${Math.round(height * 0.08)}px Arial`
-            }).setOrigin(0.5).setDepth(20).setAlpha(0);
+                font: `${Math.round(height * 0.12)}px Arial`
+            }).setOrigin(0.5).setDepth(20).setAlpha(1);
 
             // Play sequential hint animation across coins 0, 1, 2
             this.playSequentialHint = (index) => {
@@ -297,9 +306,10 @@ export default class MoneyScene extends Phaser.Scene {
 
                 this.handHintTween = this.tweens.add({
                     targets: this.handHint,
-                    y: endY,                             // Move up
-                    alpha: { start: 0, from: 1, to: 0 }, // Fade in then fade out
-                    duration: 1200,                      // Time per drag
+                    x: width / 2,
+                    y: height * 0.52,                    // Target the piggy bank
+                    alpha: { start: 1, from: 1, to: 1 }, // Keep fully opaque
+                    duration: 1500,                      // Time per drag
                     ease: 'Sine.easeOut',
                     onComplete: () => {
                         if (!this.hasEverInteracted) {

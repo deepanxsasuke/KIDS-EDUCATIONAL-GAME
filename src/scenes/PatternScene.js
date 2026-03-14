@@ -6,7 +6,15 @@ export default class PatternScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.cameras.main;
-        this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height);
+        const bg = this.add.image(width / 2, height / 2, 'bg').setDisplaySize(width, height);
+        this.tweens.add({
+            targets: bg,
+            scale: { from: bg.scaleX, to: bg.scaleX * 1.05 },
+            duration: 8000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
 
         // UI
         this.level = GameState.getLevel('pattern');
