@@ -44,8 +44,13 @@ export default class PatternScene extends Phaser.Scene {
         this.letterTiles = [];
         this.hintBusy   = false;
         this.tutorialShown = false;
-        this.currentWordIndex  = 0;
+        this.hasEverInteracted = false;
+        
         this.currentLevelWords = [...(LEVELS[this.level] || LEVELS[1])];
+        this.currentWordIndex  = GameState.getWordIndex('pattern') || 0;
+        if (this.currentWordIndex >= this.currentLevelWords.length) {
+            this.currentWordIndex = 0;
+        }
 
         // ── HUD ──────────────────────────────────────────────────────
         this.scoreText = this.add.text(20, 18, `⭐ ${this.score}`, {
@@ -89,6 +94,19 @@ export default class PatternScene extends Phaser.Scene {
     // DRAG & DROP  (global handlers, registered once per scene create)
     // ─────────────────────────────────────────────────────────────────
     setupDragHandlers() {
+        // Stop hints on first interact
+        this.input.on('dragstart', (pointer, gameObject) => {
+            this.hasEverInteracted = true;
+            if (this.handHintTween) {
+                this.handHintTween.stop();
+                this.handHintTween = null;
+            }
+            if (this.handHint) {
+                this.handHint.destroy();
+                this.handHint = null;
+            }
+        });
+
         // Global drag mover – moves the dragged container
         this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
             gameObject.setDepth(50);
@@ -453,7 +471,7 @@ export default class PatternScene extends Phaser.Scene {
         const hasPointer = this.textures.exists('hint_pointer');
         const hand = hasPointer
             ? this.add.image(targetTile.tileData.origX, targetTile.tileData.origY + 20, 'hint_pointer')
-                .setDepth(100).setScale(1.2)
+                .setDepth(100).setScale(3.0)
             : null;
 
         this.tweens.add({
@@ -485,6 +503,8 @@ export default class PatternScene extends Phaser.Scene {
     // ─────────────────────────────────────────────────────────────────
     showTutorialTip() {
         this.tutorialShown = true;
+        if (this.hasEverInteracted) return;
+
         const targetZone = this.dropZones.find(zd => !zd.filled);
         if (!targetZone) return;
         const targetTile = this.letterTiles.find(
@@ -492,34 +512,51 @@ export default class PatternScene extends Phaser.Scene {
         );
         if (!targetTile) return;
 
-        const td   = targetTile.tileData;
-        let hand;
-        if (this.textures.exists('hint_pointer')) {
-            hand = this.add.image(td.origX + 20, td.origY + 30, 'hint_pointer').setScale(1.5);
-        } else {
-            hand = this.add.text(td.origX + 20, td.origY + 30, '👆', { fontSize: '42px' });
+        const { height } = this.cameras.main;
+        const td = targetTile.tileData;
+        
+        if (!this.handHint) {
+            this.handHint = this.add.text(td.origX, td.origY, '👆🏻', {
+                font: `${Math.round(height * 0.12)}px Arial`
+            }).setOrigin(0.5).setDepth(100).setAlpha(1);
+            this.addG(this.handHint);
         }
-        hand.setDepth(100).setAlpha(0);
-        this.addG(hand);
 
-        this.tweens.chain({
-            targets: hand,
-            loop: 2,
-            onComplete: () => {
-                if (hand && hand.active) {
-                    this.tweens.add({
-                        targets: hand, alpha: 0, duration: 400,
-                        onComplete: () => hand.destroy()
-                    });
+        this.playTutorialHint = () => {
+            if (this.hasEverInteracted || !this.handHint || !this.handHint.active) return;
+            
+            // In case target changes
+            const tZone = this.dropZones.find(zd => !zd.filled);
+            if (!tZone) return;
+            const tTile = this.letterTiles.find(
+                t => t.tileData.letter === tZone.expectedLetter && !t.tileData.locked
+            );
+            if (!tTile) return;
+
+            const tileData = tTile.tileData;
+
+            this.handHint.x = tileData.origX + 20;
+            this.handHint.y = tileData.origY + 30;
+            this.handHint.setAlpha(0);
+
+            this.handHintTween = this.tweens.add({
+                targets: this.handHint,
+                x: tZone.x,
+                y: tZone.y + 15,
+                alpha: { start: 1, from: 1, to: 1 },
+                duration: 1500,
+                ease: 'Sine.easeOut',
+                onComplete: () => {
+                    if (!this.hasEverInteracted) {
+                        this.time.delayedCall(500, () => {
+                            this.playTutorialHint();
+                        });
+                    }
                 }
-            },
-            tweens: [
-                { alpha: 1, x: td.origX, y: td.origY + 15, duration: 400, ease: 'Sine.easeOut' },
-                { x: targetZone.x, y: targetZone.y + 15, duration: 900, ease: 'Cubic.easeInOut', delay: 200 },
-                { alpha: 0, duration: 300, ease: 'Sine.easeIn' },
-                { x: td.origX + 20, y: td.origY + 30, duration: 10 }
-            ]
-        });
+            });
+        };
+        
+        this.playTutorialHint();
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -632,6 +669,8 @@ export default class PatternScene extends Phaser.Scene {
             this.scoreText.setText(`⭐ ${this.score}`);
 
             this.currentWordIndex++;
+            GameState.setWordIndex('pattern', this.currentWordIndex);
+            
             const totalWords = this.currentLevelWords.length;
 
             if (this.currentWordIndex < totalWords) {
@@ -706,6 +745,7 @@ export default class PatternScene extends Phaser.Scene {
                                 overlay.destroy();
                                 this.hintsUsed = 0;
                                 this.currentWordIndex  = 0;
+                                GameState.setWordIndex('pattern', 0);
                                 this.currentLevelWords = [...(LEVELS[this.level] || LEVELS[1])];
                                 this.loadLevel();
                             }

@@ -28,6 +28,14 @@ export default class GameState {
         localStorage.setItem(`smartkid_${gameId}_level`, level.toString());
     }
 
+    static getWordIndex(gameId) {
+        return parseInt(localStorage.getItem(`smartkid_${gameId}_word_index`) || '0', 10);
+    }
+
+    static setWordIndex(gameId, index) {
+        localStorage.setItem(`smartkid_${gameId}_word_index`, index.toString());
+    }
+
     static addScoreAndCheckLevelUp(gameId, pointsAdded) {
         let currentScore = this.getScore(gameId);
         let currentLevel = this.getLevel(gameId);
