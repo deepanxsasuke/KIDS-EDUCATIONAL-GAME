@@ -185,7 +185,11 @@ export default class TimeScene extends Phaser.Scene {
             // Highlight correctly
             btn.rect.setFillStyle(0x00cc00, 1);
 
-            if (result.leveledUp) {
+            if (result.gameCompleted) {
+                this.time.delayedCall(1500, () => {
+                    this.scene.start('CelebrationScene', { gameId: 'time', sceneName: 'TimeScene' });
+                });
+            } else if (result.leveledUp) {
                 this.level = result.newLevel;
                 this.levelText.setText(`Level: ${this.level}`);
                 this.celebrateLevelUp(this.level);

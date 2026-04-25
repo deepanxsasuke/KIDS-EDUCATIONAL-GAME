@@ -71,7 +71,7 @@ export default class HomeScene extends Phaser.Scene {
             // Portrait: stack buttons vertically in center
             const startY = height * 0.38;
             const gap = height * 0.13;
-            this.createButton(width / 2, startY, btnW, btnH, btnFont, 'Pattern Game', 'PatternScene', 0xff0066);
+            this.createButton(width / 2, startY, btnW, btnH, btnFont, 'Word Game', 'PatternScene', 0xff0066);
             this.createButton(width / 2, startY + gap, btnW, btnH, btnFont, 'Money Game', 'MoneyScene', 0x00cc00);
             this.createButton(width / 2, startY + gap * 2, btnW, btnH, btnFont, 'Time Game', 'TimeScene', 0x0066ff);
             this.createButton(width / 2, startY + gap * 3, btnW, btnH, btnFont, 'Choice Game', 'ChoiceScene', 0xff9900);
@@ -81,7 +81,7 @@ export default class HomeScene extends Phaser.Scene {
             const gapX = btnW * 0.7;
             const row1Y = height * 0.4;
             const row2Y = height * 0.62;
-            this.createButton(cx - gapX, row1Y, btnW, btnH, btnFont, 'Pattern Game', 'PatternScene', 0xff0066);
+            this.createButton(cx - gapX, row1Y, btnW, btnH, btnFont, 'Word Game', 'PatternScene', 0xff0066);
             this.createButton(cx + gapX, row1Y, btnW, btnH, btnFont, 'Money Game', 'MoneyScene', 0x00cc00);
             this.createButton(cx - gapX, row2Y, btnW, btnH, btnFont, 'Time Game', 'TimeScene', 0x0066ff);
             this.createButton(cx + gapX, row2Y, btnW, btnH, btnFont, 'Choice Game', 'ChoiceScene', 0xff9900);

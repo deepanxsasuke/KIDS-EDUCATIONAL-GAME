@@ -7,6 +7,7 @@ import MoneyScene from './scenes/MoneyScene.js';
 import TimeScene from './scenes/TimeScene.js';
 import ChoiceScene from './scenes/ChoiceScene.js';
 import SplashScene from './scenes/SplashScene.js';
+import CelebrationScene from './scenes/CelebrationScene.js';
 
 const W = window.innerWidth;
 const H = window.innerHeight;
@@ -28,7 +29,7 @@ const config = {
       debug: false
     }
   },
-  scene: [BootScene, SplashScene, HomeScene, PatternScene, MoneyScene, TimeScene, ChoiceScene]
+  scene: [BootScene, SplashScene, HomeScene, PatternScene, MoneyScene, TimeScene, ChoiceScene, CelebrationScene]
 };
 
 const game = new Phaser.Game(config);

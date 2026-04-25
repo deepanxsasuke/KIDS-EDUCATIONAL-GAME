@@ -43,9 +43,14 @@ export default class GameState {
         if (newScore >= requiredScore && currentLevel < 10) {
             const nextLevel = currentLevel + 1;
             this.setLevel(gameId, nextLevel);
-            return { leveledUp: true, newLevel: nextLevel, newScore };
+            return { leveledUp: true, gameCompleted: false, newLevel: nextLevel, newScore };
         }
 
-        return { leveledUp: false, newLevel: currentLevel, newScore };
+        // Check if game is completed (Level 10 finished)
+        if (currentLevel === 10 && newScore >= requiredScore) {
+            return { leveledUp: false, gameCompleted: true, newLevel: currentLevel, newScore };
+        }
+
+        return { leveledUp: false, gameCompleted: false, newLevel: currentLevel, newScore };
     }
 }

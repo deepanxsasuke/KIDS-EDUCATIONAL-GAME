@@ -21,10 +21,17 @@ export default class ChoiceScene extends Phaser.Scene {
         this.scoreText = this.add.text(20, 20, `Score: ${this.score}`, { font: '32px Arial', fill: '#fff', stroke: '#000', strokeThickness: 5 }).setDepth(10);
         this.levelText = this.add.text(20, 60, `Level: ${this.level}`, { font: '32px Arial', fill: '#ffeb3b', stroke: '#000', strokeThickness: 5 }).setDepth(10);
 
-        // Timer display for level 5+
-        this.timerText = this.add.text(width / 2, 110, '', {
-            font: 'bold 40px Arial', fill: '#ff0000', stroke: '#fff', strokeThickness: 4
-        }).setOrigin(0.5).setDepth(10);
+        // Timer display for level 5+ — top center, proportional, with badge background
+        const timerFontSz = Math.round(Math.min(height * 0.06, width * 0.09, 44));
+        const timerY = height * 0.1;
+        const timerBadgeR = Math.round(Math.min(width * 0.08, height * 0.05, 38));
+        this.timerBadge = this.add.circle(width / 2, timerY, timerBadgeR, 0xff0000, 0.85)
+            .setStrokeStyle(3, 0xffffff)
+            .setDepth(10)
+            .setVisible(false);
+        this.timerText = this.add.text(width / 2, timerY, '', {
+            font: `bold ${timerFontSz}px Arial`, fill: '#fff', stroke: '#000', strokeThickness: 4
+        }).setOrigin(0.5).setDepth(11);
 
         this.createBackButton(width, height);
 
@@ -32,17 +39,18 @@ export default class ChoiceScene extends Phaser.Scene {
         const mascotSz = Math.min(width, height) * 0.0007;
         this.mascot = this.add.image(width - Math.min(width * 0.08, 70), height - Math.min(height * 0.15, 70), 'mascot').setScale(mascotSz).setDepth(5);
 
-        // Story container - fully proportional
+        // Story container — positioned below timer area, fully proportional
         const boxWidth = Math.min(width * 0.88, 680);
-        const boxHeight = Math.min(height * 0.38, 200);
-        const storyFontSz = Math.round(Math.min(height * 0.055, boxWidth * 0.038, 30));
+        const boxHeight = Math.min(height * 0.3, 180);
+        const storyFontSz = Math.round(Math.min(height * 0.05, boxWidth * 0.038, 28));
+        const storyY = height * 0.35;
 
-        this.add.rectangle(width / 2, height * 0.32, boxWidth, boxHeight, 0xffffff, 0.85)
+        this.add.rectangle(width / 2, storyY, boxWidth, boxHeight, 0xffffff, 0.85)
             .setStrokeStyle(5, 0xff9900)
             .setOrigin(0.5)
             .setDepth(1);
 
-        this.storyText = this.add.text(width / 2, height * 0.32, '', {
+        this.storyText = this.add.text(width / 2, storyY, '', {
             font: `${storyFontSz}px Arial`, fill: '#000', align: 'center', wordWrap: { width: boxWidth - 40 }
         }).setOrigin(0.5).setDepth(2);
 
@@ -153,6 +161,7 @@ export default class ChoiceScene extends Phaser.Scene {
     startNextStory() {
         if (this.survivalTimerEvent) this.survivalTimerEvent.remove();
         this.timerText.setText('');
+        this.timerBadge.setVisible(false);
 
         let currentLevelStories = this.levelStories[this.level] || this.levelStories[10];
 
@@ -180,6 +189,7 @@ export default class ChoiceScene extends Phaser.Scene {
         if (this.level >= 5) {
             this.timeLeft = Math.max(12 - this.level, 4); // Fast!
             this.timerText.setText(this.timeLeft.toString());
+            this.timerBadge.setVisible(true);
 
             this.survivalTimerEvent = this.time.addEvent({
                 delay: 1000,
@@ -189,7 +199,7 @@ export default class ChoiceScene extends Phaser.Scene {
                     if (this.timeLeft > 0) {
                         this.timerText.setText(this.timeLeft.toString());
                     } else {
-                        this.timerText.setText('TIME OUT!');
+                        this.timerText.setText('!');
                         if (this.inputEnabled) this.handleChoice(-1); // Force wrong answer
                     }
                 }
@@ -201,6 +211,9 @@ export default class ChoiceScene extends Phaser.Scene {
         if (!this.inputEnabled) return;
         this.inputEnabled = false;
         if (this.survivalTimerEvent) this.survivalTimerEvent.remove();
+        // Hide badge upon answering or timeout
+        // (Badge re-appears on startNextStory if level >= 5)
+        this.timerBadge.setVisible(false);
 
         const isTimeOut = btnIdx === -1;
 
@@ -226,7 +239,11 @@ export default class ChoiceScene extends Phaser.Scene {
 
             this.playConfetti();
 
-            if (result.leveledUp) {
+            if (result.gameCompleted) {
+                this.time.delayedCall(1500, () => {
+                    this.scene.start('CelebrationScene', { gameId: 'choice', sceneName: 'ChoiceScene' });
+                });
+            } else if (result.leveledUp) {
                 this.level = result.newLevel;
                 this.levelText.setText(`Level: ${this.level}`);
                 this.celebrateLevelUp(this.level);
@@ -248,6 +265,10 @@ export default class ChoiceScene extends Phaser.Scene {
                     this.startNextStory();
                 } else {
                     this.inputEnabled = true;
+                    // Bring back badge if they resume the same question (and it was active)
+                    if (this.level >= 5) {
+                         this.timerBadge.setVisible(true);
+                    }
                 }
             });
         }

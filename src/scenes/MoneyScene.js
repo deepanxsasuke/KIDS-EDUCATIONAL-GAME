@@ -129,7 +129,11 @@ export default class MoneyScene extends Phaser.Scene {
                 this.playConfetti();
                 this.coinsGroup.clear(true, true);
 
-                if (result.leveledUp) {
+                if (result.gameCompleted) {
+                    this.time.delayedCall(1500, () => {
+                        this.scene.start('CelebrationScene', { gameId: 'money', sceneName: 'MoneyScene' });
+                    });
+                } else if (result.leveledUp) {
                     this.level = result.newLevel;
                     this.levelText.setText(`Level: ${this.level}`);
                     this.celebrateLevelUp(this.level);
