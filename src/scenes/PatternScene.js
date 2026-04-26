@@ -279,12 +279,12 @@ export default class PatternScene extends Phaser.Scene {
 
             if (isMissing) {
                 // ── Drop zone ──────────────────────────────────────────
-                const visual = this.add.rectangle(bx, wordY, boxSz, boxSz, 0xffffff, 0.65)
+                const visual = this.add.rectangle(bx, wordY, boxSz, boxSz, 0xffffff, 1)
                     .setStrokeStyle(3, 0xb39ddb).setDepth(5);
                 this.addG(visual);
 
                 this.tweens.add({
-                    targets: visual, alpha: { from: 0.65, to: 1 },
+                    targets: visual, alpha: { from: 0.7, to: 1 },
                     duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
                 });
 
@@ -306,11 +306,13 @@ export default class PatternScene extends Phaser.Scene {
 
             } else {
                 // ── Pre-filled letter ──────────────────────────────────
-                const fbg = this.add.rectangle(bx, wordY, boxSz, boxSz, 0xe8f5e9, 1)
-                    .setStrokeStyle(3, 0x66bb6a).setDepth(5);
+                const shadow = this.add.rectangle(bx + 3, wordY + 4, boxSz, boxSz, 0x000000, 0.22).setDepth(4);
+                const fbg = this.add.rectangle(bx, wordY, boxSz, boxSz, 0xffca28, 1)
+                    .setStrokeStyle(3, 0xf57f17).setDepth(5);
                 const ftxt = this.add.text(bx, wordY, letter, {
-                    font: `bold ${letFontSz}px Arial`, fill: '#1b5e20'
+                    font: `bold ${letFontSz}px Arial`, fill: '#3e2000'
                 }).setOrigin(0.5).setDepth(7);
+                this.addG(shadow);
                 this.addG(fbg);
                 this.addG(ftxt);
             }
@@ -349,8 +351,9 @@ export default class PatternScene extends Phaser.Scene {
             // bounds from the container's children — this can produce a
             // rectangle that covers the whole canvas and blocks every click.
             // An explicit Rectangle(−w/2, −h/2, w, h) is always correct.
+            const pad = Math.max(15, tileSz * 0.3);
             const hitArea = new Phaser.Geom.Rectangle(
-                -tileSz / 2, -tileSz / 2, tileSz, tileSz
+                -tileSz / 2 - pad, -tileSz / 2 - pad, tileSz + pad * 2, tileSz + pad * 2
             );
             container.setSize(tileSz, tileSz);
             container.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
@@ -405,7 +408,7 @@ export default class PatternScene extends Phaser.Scene {
     // HINT BUTTON
     // ─────────────────────────────────────────────────────────────────
     createHintButton(width, height) {
-        const bx = width - 60;
+        const bx = width - Math.max(75, width * 0.08);
         const by = height * 0.46;
         const hintsLeft = 2 - (this.hintsUsed || 0);
 
@@ -580,14 +583,14 @@ export default class PatternScene extends Phaser.Scene {
         tile.y = baseY;
         td.shadow.setVisible(false);
 
-        // ── Green "correct" style ────────────────────────────────────
+        // ── Keep "yellow" correct style ──────────────────────────────
         zoneData.visual
-            .setFillStyle(0xc8e6c9, 1)
-            .setStrokeStyle(4, 0x4caf50)
+            .setFillStyle(0xffca28, 1)
+            .setStrokeStyle(4, 0xf57f17)
             .setAlpha(1);
         zoneData.letterText.setText('').setAlpha(0);
-        td.tileBg.setFillStyle(0x81c784, 1).setStrokeStyle(3, 0x388e3c);
-        td.tileText.setColor('#1b5e20');
+        td.tileBg.setFillStyle(0xffca28, 1).setStrokeStyle(3, 0xf57f17);
+        td.tileText.setColor('#3e2000');
 
         // ── Phase 1: Pop scale ───────────────────────────────────────
         this.tweens.add({
